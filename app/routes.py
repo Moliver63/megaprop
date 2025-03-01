@@ -12,6 +12,7 @@ from .forms import (
     ForgotPasswordForm,
     UpdateProfileForm
 )
+from flask_wtf.file import FileAllowed, FileSize
 from datetime import datetime
 import os
 import requests
@@ -78,7 +79,6 @@ def register():
             current_app.logger.error(f"Erro ao registrar usuário: {str(e)}")
     
     return render_template('register.html', form=form)
-
 # Login de usuário
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -91,13 +91,12 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             flash('Login realizado com sucesso!', 'success')
-            next_page = request.args.get('next') or url_for('main.dashboard')
+            next_page = request.args.get('next') or url_for('main.dashboard')  # Corrigido aqui
             return redirect(next_page)
         else:
             flash('Login falhou. Verifique seu e-mail e senha.', 'danger')
     
     return render_template('login.html', form=form)
-
 # Recuperação de senha
 @main.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -115,6 +114,59 @@ def forgot_password():
             flash('Este e-mail não está registrado em nosso sistema.', 'danger')
     
     return render_template('forgot_password.html', form=form)
+
+# Perfil do usuário
+@main.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = UpdateProfileForm()
+
+    if form.validate_on_submit():
+        try:
+            # Atualizar nome, título e email
+            current_user.name = form.name.data
+            current_user.usertitle = form.usertitle.data
+            current_user.email = form.email.data
+            current_user.phone = form.phone.data if form.phone.data else None
+
+            # Processar upload da foto de perfil
+            if form.profile_pic.data:
+                upload_folder = current_app.config['UPLOAD_FOLDER_PROFILE']
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder)
+
+                # Remover foto antiga se existir
+                if current_user.profile_picture:
+                    old_file = os.path.join(upload_folder, current_user.profile_picture)
+                    if os.path.exists(old_file):
+                        os.remove(old_file)
+
+                # Salvar nova foto
+                filename = secure_filename(form.profile_pic.data.filename)
+                file_path = os.path.join(upload_folder, filename)
+                form.profile_pic.data.save(file_path)
+                current_user.profile_picture = filename
+
+            # Atualizar senha se fornecida
+            if form.password.data:
+                current_user.set_password(form.password.data)
+
+            # Commit das alterações no banco de dados
+            db.session.commit()
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('main.profile'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao atualizar o perfil: {str(e)}', 'danger')
+
+    # Preencher o formulário com os dados atuais do usuário
+    form.name.data = current_user.name
+    form.usertitle.data = current_user.usertitle
+    form.email.data = current_user.email
+    form.phone.data = current_user.phone if hasattr(current_user, 'phone') else None
+
+    return render_template('profile.html', form=form)
 
 # Dashboard do usuário
 @main.route('/dashboard')
@@ -237,59 +289,6 @@ def logout():
     flash('Você saiu da sua conta com sucesso.', 'info')
     return redirect(url_for('main.index'))
 
-# Rota para atualizar o perfil
-@main.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    form = UpdateProfileForm()
-
-    if form.validate_on_submit():
-        try:
-            # Atualizar nome, título e email
-            current_user.name = form.name.data
-            current_user.usertitle = form.usertitle.data
-            current_user.email = form.email.data
-            current_user.phone = form.phone.data if form.phone.data else None  # Atualiza o telefone se fornecido
-
-            # Processar upload da foto de perfil
-            if form.profile_pic.data:
-                upload_folder = current_app.config['UPLOAD_FOLDER_PROFILE']
-                if not os.path.exists(upload_folder):
-                    os.makedirs(upload_folder)
-
-                # Remover foto antiga se existir
-                if current_user.profile_picture:
-                    old_file = os.path.join(upload_folder, current_user.profile_picture)
-                    if os.path.exists(old_file):
-                        os.remove(old_file)
-
-                # Salvar nova foto
-                filename = secure_filename(form.profile_pic.data.filename)
-                file_path = os.path.join(upload_folder, filename)
-                form.profile_pic.data.save(file_path)
-                current_user.profile_picture = filename
-
-            # Atualizar senha se fornecida
-            if form.password.data:
-                current_user.set_password(form.password.data)  # Assumindo que `set_password` está definido no modelo User
-
-            # Commit das alterações no banco de dados
-            db.session.commit()
-            flash('Perfil atualizado com sucesso!', 'success')
-            return redirect(url_for('main.profile'))
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao atualizar o perfil: {str(e)}', 'danger')
-
-    # Preencher o formulário com os dados atuais do usuário
-    form.name.data = current_user.name
-    form.usertitle.data = current_user.usertitle
-    form.email.data = current_user.email
-    form.phone.data = current_user.phone if hasattr(current_user, 'phone') else None
-
-    return render_template('profile.html', form=form)
-    
 # Excluir conta
 @main.route('/delete_account', methods=['POST'])
 @login_required
@@ -351,24 +350,64 @@ def received_proposals():
     proposals = Proposal.query.filter_by(receiver_id=current_user.id).all()
     return render_template('received_proposals.html', proposals=proposals)
 
+# Enviar proposta
+@main.route('/send_proposal', methods=['GET', 'POST'])
+@login_required
+def send_proposal():
+    form = ProposalForm()
+    form.property_id.choices = [(prop.id, prop.title) for prop in Property.query.all()]
+
+    if form.validate_on_submit():
+        try:
+            property_id = form.property_id.data
+            property = Property.query.get(property_id)
+
+            if not property:
+                flash('Imóvel inválido ou não encontrado.', 'danger')
+                return redirect(url_for('main.send_proposal'))
+
+            if not property.user_id:
+                flash('Este imóvel não tem um proprietário associado.', 'danger')
+                return redirect(url_for('main.send_proposal'))
+
+            proposal = Proposal(
+                message=form.message.data,
+                status='pending',
+                property_id=property_id,
+                sender_id=current_user.id,
+                receiver_id=property.user_id
+            )
+
+            db.session.add(proposal)
+            db.session.commit()
+
+            flash('Proposta enviada com sucesso!', 'success')
+            return redirect(url_for('main.dashboard'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao enviar proposta: {str(e)}', 'danger')
+            current_app.logger.error(f"Erro ao enviar proposta: {str(e)}")
+            return redirect(url_for('main.send_proposal'))
+
+    return render_template('send_proposal.html', form=form)
+
 # Editar imóvel
 @main.route('/edit-property/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_property(id):
-    # Buscar o imóvel pelo ID
     property = Property.query.get_or_404(id)
 
-    # Verificar se o imóvel pertence ao usuário logado
     if property.user_id != current_user.id:
         flash('Você não tem permissão para editar este imóvel.', 'danger')
         return redirect(url_for('main.my_properties'))
 
-    form = PropertyForm(obj=property)  # Preenche o formulário com os dados atuais do imóvel
+    form = PropertyForm(obj=property)
 
     if form.validate_on_submit():
         try:
             photo_paths = []
-            if form.photos.data:  # Verifica se há arquivos enviados
+            if form.photos.data:
                 for photo in form.photos.data:
                     if photo and hasattr(photo, 'filename') and allowed_file(photo.filename):
                         filename = secure_filename(photo.filename)
@@ -377,7 +416,6 @@ def edit_property(id):
                         photo_paths.append(filename)
                         current_app.logger.info(f"Foto salva: {save_path}")
             
-            # Atualiza os campos do imóvel
             property.title = form.title.data
             property.location = form.location.data
             property.price = form.price.data
@@ -391,39 +429,13 @@ def edit_property(id):
 
             db.session.commit()
             flash('Imóvel atualizado com sucesso!', 'success')
-            return redirect(url_for('main.my_properties'))  # Redireciona para "Meus Imóveis"
+            return redirect(url_for('main.my_properties'))
         except Exception as e:
             db.session.rollback()
             flash(f'Ocorreu um erro ao atualizar o imóvel: {str(e)}', 'danger')
             current_app.logger.error(f"Erro ao atualizar imóvel: {str(e)}")
 
     return render_template('edit_property.html', form=form, property=property)
-
-# Enviar proposta
-@main.route('/send_proposal', methods=['GET', 'POST'])
-@login_required
-def send_proposal():
-    form = ProposalForm()
-    form.property_id.choices = [(prop.id, prop.title) for prop in Property.query.all()]
-    if form.validate_on_submit():
-        try:
-            proposal = Proposal(
-                message=form.message.data,
-                status='pending',
-                property_id=form.property_id.data,
-                sender_id=current_user.id,
-                receiver_id=Property.query.get(form.property_id.data).user_id
-            )
-            db.session.add(proposal)
-            db.session.commit()
-            flash('Proposta enviada com sucesso!', 'success')
-            return redirect(url_for('main.dashboard'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao enviar proposta: {str(e)}', 'danger')
-            current_app.logger.error(f"Erro ao enviar proposta: {str(e)}")
-    
-    return render_template('send_proposal.html', form=form)
 
 # Dashboard específico para corretores
 @main.route('/dashboard/corretor')
@@ -437,6 +449,7 @@ def dashboard_corretor():
 def dashboard_construtora():
     return render_template('dashboard_construtora.html')
 
+# Excluir foto específica de um 
 # Excluir foto específica de um imóvel
 @main.route('/delete_photo/<int:property_id>/<string:photo_name>', methods=['POST'])
 @login_required
@@ -484,10 +497,14 @@ def delete_photo(property_id, photo_name):
 @main.route('/match')
 @login_required
 def match():
+    # Obter parâmetros de filtro da URL
     location = request.args.get('location', '')
     property_type = request.args.get('property_type', '')
     min_price = request.args.get('min_price', 0, type=float)
     max_price = request.args.get('max_price', 1000000000, type=float)
+    page = request.args.get('page', 1, type=int)  # Página atual
+
+    # Construir a consulta com base nos filtros
     query = Property.query.filter(Property.status == 'available')
     if location:
         query = query.filter(Property.location.ilike(f"%{location}%"))
@@ -495,7 +512,13 @@ def match():
         query = query.filter(Property.property_type == property_type)
     if min_price or max_price:
         query = query.filter(Property.price.between(min_price, max_price))
-    matches = query.order_by(Property.price.asc()).all()
+
+    # Ordenar os resultados por preço (opcional)
+    query = query.order_by(Property.price.asc())
+
+    # Paginar os resultados
+    matches = query.paginate(page=page, per_page=9, error_out=False)  # 9 itens por página
+
     return render_template('match.html', matches=matches)
 
 # Assinatura Eletrônica

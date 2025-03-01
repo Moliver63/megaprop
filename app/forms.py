@@ -18,28 +18,41 @@ from wtforms.validators import (
     Optional,
     ValidationError,
 )
-from flask_wtf.file import FileAllowed
+from flask_wtf.file import FileAllowed, FileSize  # Importação correta do FileSize
 from .models import User  # Importe o modelo User para validação de unicidade
+from flask_login import current_user  # Para validação no UpdateProfileForm
 
 # Formulário de Registro
 class RegistrationForm(FlaskForm):
-    name = StringField('Nome Completo', validators=[DataRequired()])
+    name = StringField(
+        'Nome Completo',
+        validators=[DataRequired(message="O nome é obrigatório.")]
+    )
     usertitle = StringField(
         'Nome de Usuário',
-        validators=[DataRequired(), Length(min=3, max=80)]
+        validators=[
+            DataRequired(message="O nome de usuário é obrigatório."),
+            Length(min=3, max=80, message="O nome de usuário deve ter entre 3 e 80 caracteres.")
+        ]
     )
-    email = StringField('E-mail', validators=[DataRequired(), Email()])
+    email = StringField(
+        'E-mail',
+        validators=[
+            DataRequired(message="O e-mail é obrigatório."),
+            Email(message="Insira um e-mail válido.")
+        ]
+    )
     password = PasswordField(
         'Senha',
         validators=[
-            DataRequired(),
+            DataRequired(message="A senha é obrigatória."),
             Length(min=6, message="A senha deve ter pelo menos 6 caracteres.")
         ]
     )
     confirm_password = PasswordField(
         'Confirmar Senha',
         validators=[
-            DataRequired(),
+            DataRequired(message="Confirme sua senha."),
             EqualTo('password', message="As senhas devem coincidir.")
         ]
     )
@@ -161,61 +174,7 @@ class ForgotPasswordForm(FlaskForm):
     )
     submit = SubmitField('Enviar E-mail de Recuperação')
 
-# Formulário para Envio de Propostas
-class ProposalForm(FlaskForm):
-    user_type = SelectField(
-        'Tipo de Usuário',
-        choices=[
-            ('corretor', 'Corretor'),
-            ('imobiliaria', 'Imobiliária'),
-            ('construtora', 'Construtora'),
-            ('empreiteiro', 'Empreiteiro')
-        ],
-        validators=[DataRequired(message="Selecione o tipo de usuário.")]
-    )
-    proposal_type = SelectField(
-        'Tipo de Proposta',
-        choices=[
-            ('compra', 'Compra'),
-            ('venda', 'Venda'),
-            ('aluguel', 'Aluguel'),
-            ('parceria', 'Parceria'),
-            ('execucao', 'Execução de Obra')
-        ],
-        validators=[DataRequired(message="Selecione o tipo de proposta.")]
-    )
-    property_id = SelectField(
-        'Selecione o Imóvel (Opcional)',
-        coerce=int,
-        validators=[Optional()]
-    )
-    amount = DecimalField(
-        'Valor da Proposta',
-        places=2,
-        validators=[
-            DataRequired(message="Insira o valor da proposta."),
-            NumberRange(min=1, message="O valor da proposta deve ser maior que zero.")
-        ]
-    )
-    message = TextAreaField(
-        'Mensagem',
-        validators=[
-            DataRequired(message="Insira uma mensagem."),
-            Length(min=10, message="A mensagem deve ter pelo menos 10 caracteres.")
-        ],
-        render_kw={"rows": 4}
-    )
-    attachment = FileField(
-        'Anexar Documento (Opcional)',
-        validators=[
-            Optional(),
-            FileAllowed(['pdf', 'docx', 'txt'], 'Apenas documentos são permitidos!')
-        ]
-    )
-    submit = SubmitField('Enviar Proposta')
-
-#class UpdateProfileForm(FlaskForm):
-
+# Formulário para Atualização de Perfil
 class UpdateProfileForm(FlaskForm):
     name = StringField(
         'Nome Completo',
@@ -236,52 +195,10 @@ class UpdateProfileForm(FlaskForm):
         ]
     )
     phone = StringField(
-        'Telefone (opcional)',
+        'Telefone',
         validators=[
-            Optional(),
-            Length(max=15, message="O número de telefone deve ter no máximo 15 caracteres.")
-        ]
-    )
-    profile_pic = FileField(
-        'Foto de Perfil',
-        validators=[
-            Optional(),
-            FileAllowed(['jpg', 'jpeg', 'png'], 'Apenas imagens são permitidas!')
-        ]
-    )
-    password = PasswordField(
-        'Nova Senha (opcional)',
-        validators=[
-            Optional(),
-            Length(min=6, message="A senha deve ter pelo menos 6 caracteres.")
-        ]
-    )
-    submit = SubmitField('Atualizar Perfil')
-   
-class UpdateProfileForm(FlaskForm):
-    name = StringField(
-        'Nome Completo',
-        validators=[DataRequired(message="O nome é obrigatório.")]
-    )
-    usertitle = StringField(
-        'Nome de Usuário',
-        validators=[
-            DataRequired(message="O nome de usuário é obrigatório."),
-            Length(min=2, max=20, message="Deve ter entre 2 e 20 caracteres.")
-        ]
-    )
-    email = StringField(
-        'E-mail',
-        validators=[
-            DataRequired(message="O e-mail é obrigatório."),
-            Email(message="Insira um e-mail válido.")
-        ]
-    )
-    phone = StringField(
-        'Telefone (opcional)',
-        validators=[
-            Optional(),
-            Length(max=15, message="O número de telefone deve ter no máximo 15 caracteres.")
+            Optional(),  # O telefone é opcional
+            Length(min=10, max=15, message="O número de telefone deve ter entre 10 e 15 caracteres.")
         ]
     )
     profile_pic = FileField(
@@ -311,3 +228,78 @@ class UpdateProfileForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError("Este e-mail já está cadastrado.")
+
+# Formulário para Envio de Propostas
+class ProposalForm(FlaskForm):
+    # Campo: Tipo de Usuário
+    user_type = SelectField(
+        'Tipo de Usuário',
+        choices=[
+            ('corretor', 'Corretor'),
+            ('imobiliaria', 'Imobiliária'),
+            ('construtora', 'Construtora'),
+            ('empreiteiro', 'Empreiteiro')
+        ],
+        validators=[DataRequired(message="Selecione o tipo de usuário.")],
+        render_kw={"class": "form-select", "required": True}
+    )
+
+    # Campo: Tipo de Proposta
+    proposal_type = SelectField(
+        'Tipo de Proposta',
+        choices=[
+            ('compra', 'Compra'),
+            ('venda', 'Venda'),
+            ('aluguel', 'Aluguel'),
+            ('parceria', 'Parceria'),
+            ('execucao', 'Execução de Obra')
+        ],
+        validators=[DataRequired(message="Selecione o tipo de proposta.")],
+        render_kw={"class": "form-select", "required": True}
+    )
+
+    # Campo: Imóvel (Opcional)
+    property_id = SelectField(
+        'Selecione o Imóvel (Opcional)',
+        coerce=int,  # Converte o valor para inteiro
+        validators=[Optional()],
+        render_kw={"class": "form-select"}
+    )
+
+    # Campo: Valor da Proposta
+    amount = DecimalField(
+        'Valor da Proposta',
+        places=2,  # Define duas casas decimais
+        validators=[
+            DataRequired(message="Insira o valor da proposta."),
+            NumberRange(min=1, message="O valor da proposta deve ser maior que zero.")
+        ],
+        render_kw={"class": "form-control", "placeholder": "Ex: 100.000,00", "required": True}
+    )
+
+    # Campo: Mensagem
+    message = TextAreaField(
+        'Mensagem',
+        validators=[
+            DataRequired(message="Insira uma mensagem."),
+            Length(min=10, message="A mensagem deve ter pelo menos 10 caracteres.")
+        ],
+        render_kw={"class": "form-control", "rows": 4, "placeholder": "Explique detalhes importantes sobre sua proposta...", "required": True}
+    )
+
+    # Campo: Anexo de Documento (Opcional)
+    attachment = FileField(
+        'Anexar Documento (Opcional)',
+        validators=[
+            Optional(),
+            FileAllowed(['pdf', 'docx', 'txt'], 'Apenas documentos são permitidos!'),
+            FileSize(max_size=10 * 1024 * 1024, message="O arquivo não pode exceder 10 MB.")  # Validação de tamanho
+        ],
+        render_kw={"class": "form-control"}
+    )
+
+    # Botão de Envio
+    submit = SubmitField(
+        'Enviar Proposta',
+        render_kw={"class": "btn btn-primary btn-lg", "style": "background: linear-gradient(135deg, #3498db, #2980b9); border: none;"}
+    )

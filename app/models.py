@@ -1,7 +1,7 @@
-from datetime import datetime
-from .extensions import db
+from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 class User(UserMixin, db.Model):
     """
@@ -38,8 +38,23 @@ class User(UserMixin, db.Model):
         """Verifica se a senha fornecida corresponde à senha armazenada."""
         return check_password_hash(self.password, password)
 
+    def get_active_properties(self):
+        """Retorna os imóveis ativos do usuário."""
+        return self.properties.filter(
+            Property.status.in_(['available', 'negotiation'])
+        ).order_by(Property.created_at.desc())
+
+    def get_match_suggestions(self, limit=10):
+        """Retorna sugestões de imóveis com base nas preferências de localização do usuário."""
+        if not self.preferred_locations:
+            return []
+        return Property.query.filter(
+            Property.location.ilike(f'%{self.preferred_locations}%'),
+            Property.status == 'available'
+        ).limit(limit).all()
+
     def __repr__(self):
-        return f'<User {self.usertitle} ({self.email})>'
+        return f'<User {self.usertitle}>'
 
 class Property(db.Model):
     """
@@ -93,88 +108,8 @@ class Property(db.Model):
             photos_list.remove(filename)
             self.photos = ','.join(photos_list) if photos_list else None
 
-    def to_dict(self):
-        """Serializa o objeto para dicionário (API friendly)."""
-        return {
-            'id': self.id,
-            'title': self.title,
-            'price': self.price,
-            'location': self.location,
-            'status': self.status,
-            'created_at': self.created_at.isoformat(),
-        }
-
     def __repr__(self):
         return f'<Property {self.title}>'
-
-# As outras classes (Proposal, Match, Notification, Activity, VisitAgreement) permanecem inalteradas.
-
-class Property(db.Model):
-    """
-    Representa imóveis com suporte a geolocalização e tags.
-    """
-    __tablename__ = 'property'
-    __table_args__ = (
-        db.Index('idx_property_location', 'location'),
-        db.Index('idx_property_price', 'price'),
-        db.Index('idx_property_status', 'status'),
-        {'extend_existing': True}
-    )
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    price = db.Column(db.Float, nullable=False)
-    location = db.Column(db.String(200), nullable=False)
-    property_type = db.Column(db.String(50), nullable=False)  # Tipo: casa, apartamento, terreno, etc.
-    status = db.Column(db.String(50), nullable=False, default='available')  # Status: available, negotiation, sold
-    bedrooms = db.Column(db.Integer)
-    bathrooms = db.Column(db.Integer)
-    total_area = db.Column(db.Float)
-    photos = db.Column(db.String(500))  # Fotos separadas por vírgula
-    tags = db.Column(db.String(500))  # Tags de busca separadas por vírgula
-    geo_location = db.Column(db.String(100))  # Formato: 'lat,lng'
-    is_featured = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    # Relacionamentos
-    owner = db.relationship('User', back_populates='properties')
-    proposals = db.relationship('Proposal', back_populates='property', lazy='dynamic')
-    matches = db.relationship('Match', back_populates='property')
-
-    def get_photos_list(self):
-        """Retorna uma lista das fotos do imóvel."""
-        return self.photos.split(',') if self.photos else []
-
-    def add_photo(self, filename):
-        """Adiciona uma nova foto ao imóvel."""
-        photos_list = self.get_photos_list()
-        photos_list.append(filename)
-        self.photos = ','.join(photos_list)
-
-    def remove_photo(self, filename):
-        """Remove uma foto do imóvel."""
-        photos_list = self.get_photos_list()
-        if filename in photos_list:
-            photos_list.remove(filename)
-            self.photos = ','.join(photos_list) if photos_list else None
-
-    def to_dict(self):
-        """Serializa o objeto para dicionário (API friendly)."""
-        return {
-            'id': self.id,
-            'title': self.title,
-            'price': self.price,
-            'location': self.location,
-            'status': self.status,
-            'created_at': self.created_at.isoformat(),
-        }
-
-    def __repr__(self):
-        return f'<Property {self.title}>'
-
 
 class Proposal(db.Model):
     """
@@ -203,9 +138,13 @@ class Proposal(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], back_populates='sent_proposals')
     receiver = db.relationship('User', foreign_keys=[receiver_id], back_populates='received_proposals')
 
-    def __repr__(self):
-        return f'<Proposal {self.id}>'
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.amount <= 0:
+            raise ValueError("Proposal amount must be positive")
 
+    def __repr__(self):
+        return f'<Proposal {self.id} - {self.status}>'
 
 class Match(db.Model):
     """
@@ -226,18 +165,8 @@ class Match(db.Model):
     matched_user = db.relationship('User', foreign_keys=[matched_user_id], back_populates='received_matches')
     property = db.relationship('Property', back_populates='matches')
 
-    def to_dict(self):
-        """Serializa o objeto para dicionário (API friendly)."""
-        return {
-            'id': self.id,
-            'match_type': self.match_type,
-            'status': self.status,
-            'created_at': self.created_at.isoformat(),
-        }
-
     def __repr__(self):
-        return f'<Match {self.id}>'
-
+        return f'<Match {self.match_type} - {self.status}>'
 
 class Notification(db.Model):
     """
@@ -262,19 +191,8 @@ class Notification(db.Model):
         self.is_read = True
         db.session.commit()
 
-    def to_dict(self):
-        """Serializa o objeto para dicionário (API friendly)."""
-        return {
-            'id': self.id,
-            'content': self.content,
-            'notification_type': self.notification_type,
-            'is_read': self.is_read,
-            'created_at': self.created_at.isoformat(),
-        }
-
     def __repr__(self):
-        return f'<Notification {self.id}>'
-
+        return f'<Notification {self.notification_type}>'
 
 class Activity(db.Model):
     """
@@ -287,14 +205,12 @@ class Activity(db.Model):
     description = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     ip_address = db.Column(db.String(45))  # Endereço IP do usuário
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Chave estrangeira para conectar ao usuário
 
-    # Relacionamentos
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user = db.relationship('User', back_populates='activities')
 
     def __repr__(self):
-        return f'<Activity {self.id}>'
-
+        return f'<Activity {self.id} - {self.timestamp}>'
 
 class VisitAgreement(db.Model):
     """
@@ -318,4 +234,4 @@ class VisitAgreement(db.Model):
     property_owner = db.relationship('User', foreign_keys=[property_owner_id], backref=db.backref('visit_agreements_as_owner', lazy=True))
 
     def __repr__(self):
-        return f'<VisitAgreement {self.id}>'
+        return f'<VisitAgreement {self.id} - {self.visit_date}>'

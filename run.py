@@ -57,7 +57,7 @@ def populate_database():
         logger.error(f"Erro ao adicionar dados iniciais ao banco de dados: {str(e)}")
         db.session.rollback()
         raise  # Re-lança a exceção para evitar falhas silenciosas
-
+       
 if __name__ == '__main__':
     # Cria a instância da aplicação Flask
     app = create_app()

@@ -2,77 +2,63 @@
 {% block title %}Propriedades Correspondentes - Megaprop{% endblock %}
 {% block content %}
 <div class="container py-5">
-    <h2 class="text-center mb-4 pb-2 border-bottom">Propriedades Correspondentes</h2>
-
+    <h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
+        <i class="fas fa-handshake fa-2x text-info mb-3"></i> Matches
+    </h1>
+    
     <!-- Formulário de Filtro -->
-    <div class="row mb-4">
-        <div class="col-md-8 offset-md-2">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <input type="text" 
-                           name="location" 
-                           value="{{ request.args.get('location') }}" 
-                           placeholder="Localização" 
-                           class="form-control">
+    <div class="card shadow-sm p-4 mb-4">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Localização</label>
+                <input type="text" name="location" value="{{ request.args.get('location', '') }}" placeholder="Digite a localização" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tipo de Imóvel</label>
+                <select class="form-select" name="property_type">
+                    <option value="">Todos os Tipos</option>
+                    <option value="casa" {% if request.args.get('property_type') == 'casa' %}selected{% endif %}>Casa</option>
+                    <option value="apartamento" {% if request.args.get('property_type') == 'apartamento' %}selected{% endif %}>Apartamento</option>
+                    <option value="terreno" {% if request.args.get('property_type') == 'terreno' %}selected{% endif %}>Terreno</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Faixa de Preço</label>
+                <div class="input-group">
+                    <span class="input-group-text">R$</span>
+                    <input type="number" name="min_price" placeholder="Mínimo" value="{{ request.args.get('min_price', '') }}" class="form-control">
+                    <input type="number" name="max_price" placeholder="Máximo" value="{{ request.args.get('max_price', '') }}" class="form-control">
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" name="property_type">
-                        <option value="">Todos os Tipos</option>
-                        <option value="casa" {% if request.args.get('property_type') == 'casa' %}selected{% endif %}>Casa</option>
-                        <option value="apartamento" {% if request.args.get('property_type') == 'apartamento' %}selected{% endif %}>Apartamento</option>
-                        <option value="terreno" {% if request.args.get('property_type') == 'terreno' %}selected{% endif %}>Terreno</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <div class="input-group">
-                        <span class="input-group-text">R$</span>
-                        <input type="number" 
-                               name="min_price" 
-                               placeholder="Mínimo" 
-                               value="{{ request.args.get('min_price', '') }}" 
-                               class="form-control">
-                        <input type="number" 
-                               name="max_price" 
-                               placeholder="Máximo" 
-                               value="{{ request.args.get('max_price', '') }}" 
-                               class="form-control">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="fas fa-search"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
     </div>
-
+    
     <!-- Resultados da Busca -->
     <div class="row gy-4">
-        {% if matches %}
-            {% for property in matches %}
+        {% if matches.items %}
+            {% for property in matches.items %}
                 <div class="col-md-4">
-                    <div class="card h-100 shadow-sm">
-                        <!-- Imagem do Imóvel -->
-                        <img src="{{ url_for('static', filename='uploads/' + (property.photos.split(',')[0] if property.photos else 'default_property.jpg')) }}" 
+                    <div class="card h-100 shadow-sm border-0">
+                        <img src="{{ url_for('static', filename='uploads/' ~ (property.photos.split(',')[0] if property.photos else 'default_property.jpg')) }}" 
                              class="card-img-top" 
                              alt="{{ property.title }}"
-                             style="height: 200px; object-fit: cover;">
+                             style="height: 220px; object-fit: cover; border-radius: 8px 8px 0 0;">
                         <div class="card-body d-flex flex-column">
-                            <!-- Título e Descrição -->
-                            <h4 class="mb-2">{{ property.title }}</h4>
-                            <p class="text-muted mb-1">{{ property.description|truncate(100) }}</p>
-                            <!-- Preço e Localização -->
-                            <div class="mb-1">
-                                <span class="fw-bold me-2">R$ {{ "{:,.2f}".format(property.price)|replace(',', 'X')|replace('.', ',')|replace('X', '.') }}</span>
-                                <small class="text-muted">| {{ property.location }}</small>
+                            <h5 class="mb-2 fw-bold">{{ property.title }}</h5>
+                            <p class="text-muted small">{{ property.description|truncate(100) }}</p>
+                            <div class="mb-2">
+                                <span class="fw-bold text-success">R$ {{ "{:,.2f}".format(property.price)|replace(',', 'X')|replace('.', ',')|replace('X', '.') }}</span>
+                                <small class="text-muted"> | {{ property.location }}</small>
                             </div>
-                            <!-- Tipo de Imóvel e Botão de Proposta -->
                             <div class="mt-auto d-flex justify-content-between align-items-center">
-                                <span class="badge rounded-pill bg-primary text-light">{{ property.property_type }}</span>
-                                <a href="{{ url_for('main.send_proposal', property_id=property.id) }}" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-comment-dollar"></i> Enviar Proposta
+                                <span class="badge bg-primary text-light">{{ property.property_type }}</span>
+                                <a href="{{ url_for('main.send_proposal', property_id=property.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-comment-dollar"></i> Propor
                                 </a>
                             </div>
                         </div>
@@ -80,15 +66,54 @@
                 </div>
             {% endfor %}
         {% else %}
-            <!-- Mensagem para Nenhum Resultado -->
             <div class="col-12 text-center">
-                <h4 class="text-muted mb-3">Nenhuma propriedade correspondente foi encontrada.</h4>
-                <a href="{{ url_for('main.match') }}" 
-                   class="btn btn-outline-secondary">
+                <h4 class="text-muted">Nenhuma propriedade correspondente foi encontrada.</h4>
+                <a href="{{ url_for('main.match') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-redo"></i> Tentar Novamente
                 </a>
             </div>
         {% endif %}
     </div>
+
+    <!-- Paginação -->
+    <nav aria-label="Paginação" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if matches.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.match', page=matches.prev_num, location=request.args.get('location'), property_type=request.args.get('property_type'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo;</span>
+                </li>
+            {% endif %}
+
+            {% for page_num in matches.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if matches.page == page_num %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.match', page=page_num, location=request.args.get('location'), property_type=request.args.get('property_type'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if matches.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.match', page=matches.next_num, location=request.args.get('location'), property_type=request.args.get('property_type'), min_price=request.args.get('min_price'), max_price=request.args.get('max_price')) }}" aria-label="Próximo">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&raquo;</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
 {% endblock %}

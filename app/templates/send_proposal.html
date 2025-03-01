@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %} Enviar Proposta - Megaprop{% endblock %}
+
+{% block title %}Enviar Proposta - Megaprop{% endblock %}
+
 {% block content %}
 <!-- Título -->
 <h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
@@ -8,85 +10,58 @@
 
 <!-- Formulário de Envio de Proposta -->
 <div class="container py-5">
-    <h1 class="text-center mb-4"></h1>
-    
     <!-- Exibição de mensagens de erro ou sucesso -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    {% for category, message in messages %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-    </div>
-    {% endfor %}
-    {% endif %}
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     {% endwith %}
-    
+
     <form method="POST" action="{{ url_for('main.send_proposal') }}" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
-        
-        <!-- Tipo de Usuário -->
-        <div class="mb-3">
-            {{ form.user_type.label(class="form-label") }}
-            {{ form.user_type(class="form-select") }}
-            {% for error in form.user_type.errors %}
-            <small class="text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        
-        <!-- Tipo de Proposta -->
-        <div class="mb-3">
-            {{ form.proposal_type.label(class="form-label") }}
-            {{ form.proposal_type(class="form-select") }}
-            {% for error in form.proposal_type.errors %}
-            <small class="text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        
+
         <!-- Selecione o Imóvel (Opcional) -->
         <div class="mb-3">
             {{ form.property_id.label(class="form-label") }}
-            {{ form.property_id(class="form-select") }}
+            {{ form.property_id(class="form-select", placeholder="Selecione um imóvel") }}
             {% for error in form.property_id.errors %}
-            <small class="text-danger">{{ error }}</small>
+                <small class="text-danger">{{ error }}</small>
             {% endfor %}
         </div>
-        
-        <!-- Valor da Proposta -->
-        <div class="mb-3">
-            {{ form.amount.label(class="form-label") }}
-            <div class="input-group">
-                <span class="input-group-text">R$</span>
-                {{ form.amount(class="form-control", placeholder="Ex: 100.000,00") }}
-            </div>
-            <small class="form-text text-muted">Insira o valor que deseja propor.</small>
-            {% for error in form.amount.errors %}
-            <small class="text-danger">{{ error }}</small>
-            {% endfor %}
-        </div>
-        
+
         <!-- Mensagem -->
         <div class="mb-3">
             {{ form.message.label(class="form-label") }}
             {{ form.message(class="form-control", rows="4", placeholder="Explique detalhes importantes sobre sua proposta...") }}
             {% for error in form.message.errors %}
-            <small class="text-danger">{{ error }}</small>
+                <small class="text-danger">{{ error }}</small>
             {% endfor %}
         </div>
-        
+
         <!-- Anexar Documento (Opcional) -->
         <div class="mb-3">
             {{ form.attachment.label(class="form-label") }}
-            {{ form.attachment(class="form-control") }}
-            <small class="form-text text-muted">Você pode anexar documentos como comprovantes ou planilhas.</small>
+            {{ form.attachment(class="form-control", accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg") }}
+            <small class="form-text text-muted">Você pode anexar documentos como comprovantes ou planilhas (formatos suportados: PDF, DOC, XLS, PNG, JPG).</small>
             {% for error in form.attachment.errors %}
-            <small class="text-danger">{{ error }}</small>
+                <small class="text-danger">{{ error }}</small>
             {% endfor %}
         </div>
-        
+
         <!-- Botão de Envio -->
         <div class="d-grid gap-2">
-            {{ form.submit(class="btn btn-primary btn-lg", style="background: linear-gradient(135deg, #3498db, #2980b9); border: none; ") }}
+            <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #3498db, #2980b9); border: none;">
+                Enviar Proposta
+            </button>
         </div>
     </form>
 </div>
