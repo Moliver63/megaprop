@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Perfil - Megaprop{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <!-- Cabeçalho -->
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h3 class="mb-0">Meu Perfil</h3>
+                </div>
+                
+                <!-- Corpo do Cartão -->
+                <div class="card-body">
+                    <!-- Foto de Perfil -->
+                    <div class="text-center mb-4">
+                        {% if current_user.profile_picture %}
+                            <img id="profile-preview" 
+                                 src="{{ url_for('static', filename='profile_pics/' + current_user.profile_picture) }}" 
+                                 class="img-thumbnail rounded-circle shadow" 
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div id="default-profile" 
+                                 class="bg-light rounded-circle d-flex align-items-center justify-content-center text-muted"
+                                 style="width: 150px; height: 150px; font-size: 60px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Formulário -->
+                    <form method="POST" enctype="multipart/form-data" id="profile-form">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Nome -->
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label fw-bold") }}
+                            {{ form.name(class="form-control", placeholder="Seu nome completo") }}
+                            {% for error in form.name.errors %}
+                                <div class="invalid-feedback d-block text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Nome de Usuário -->
+                        <div class="mb-3">
+                            {{ form.usertitle.label(class="form-label fw-bold") }}
+                            {{ form.usertitle(class="form-control", placeholder="Nome de usuário único") }}
+                            {% for error in form.usertitle.errors %}
+                                <div class="invalid-feedback d-block text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- E-mail -->
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label fw-bold") }}
+                            {{ form.email(class="form-control", placeholder="seuemail@example.com") }}
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback d-block text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Foto de Perfil -->
+                        <div class="mb-3">
+                            {{ form.profile_pic.label(class="form-label fw-bold") }}
+                            {{ form.profile_pic(class="form-control", id="profile-pic-input") }}
+                            <small class="text-muted d-block mt-1">Escolha uma nova foto de perfil (formatos permitidos: JPG, PNG).</small>
+                            {% for error in form.profile_pic.errors %}
+                                <div class="invalid-feedback d-block text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Senha -->
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label fw-bold") }}
+                            {{ form.password(class="form-control", placeholder="Deixe em branco para manter a senha atual") }}
+                            {% for error in form.password.errors %}
+                                <div class="invalid-feedback d-block text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Botão de Envio -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para Pré-Visualização da Imagem -->
+<script>
+document.getElementById('profile-pic-input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('profile-preview');
+            const defaultProfile = document.getElementById('default-profile');
+
+            if (preview) {
+                preview.src = e.target.result;
+            } else {
+                const img = document.createElement('img');
+                img.id = 'profile-preview';
+                img.src = e.target.result;
+                img.classList.add('img-thumbnail', 'rounded-circle', 'shadow');
+                img.style.width = '150px';
+                img.style.height = '150px';
+                img.style.objectFit = 'cover';
+
+                defaultProfile.replaceWith(img);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

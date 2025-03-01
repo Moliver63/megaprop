@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Propostas - Megaprop{% endblock %}
+{% block content %}
+<!-- Título -->
+ <h1 class="text-center text-uppercase fw-bold mb-4">Dashboard</h1>
+
+ <!-- Botões de Navegação -->
+ <div class="row mb-4">
+     <div class="col-md-3">
+         <a href="{{ url_for('main.add_property') }}" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center shadow-sm rounded-3">
+             <i class="fas fa-plus me-2"></i> Cadastrar Imóvel
+         </a>
+     </div>
+     <div class="col-md-3">
+         <a href="{{ url_for('main.add_property') }}" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center shadow-sm rounded-3">
+             <i class="fas fa-home me-2"></i> Meus Imóveis
+         </a>
+     </div>
+     <div class="col-md-3">
+         <a href="{{ url_for('main.received_proposals') }}" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center shadow-sm rounded-3">
+             <i class="fas fa-envelope me-2"></i> Propostas Recebidas
+         </a>
+     </div>
+     <div class="col-md-3">
+         <a href="{{ url_for('main.send_proposal') }}" class="btn btn-primary w-100 d-flex align-items-center justify-content-center shadow-sm rounded-3">
+             <i class="fas fa-paper-plane me-2"></i> Enviar Proposta
+         </a>
+     </div>
+ </div>
+<h1>Propostas Recebidas</h1>
+{% for proposal in received %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">De: {{ proposal.sender.username }}</h5>
+        <p class="card-text"><strong>Propriedade:</strong> {{ proposal.property.title }}</p>
+        <p class="card-text"><strong>Valor:</strong> R$ {{ "%.2f"|format(proposal.amount) }}</p>
+        <p class="card-text"><strong>Status:</strong> {{ proposal.status }}</p>
+        <a href="{{ url_for('main.respond_proposal', proposal_id=proposal.id) }}" class="btn btn-primary">Responder</a>
+        <a href="{{ url_for('main.accept_proposal', proposal_id=proposal.id) }}" class="btn btn-success">Aceitar</a>
+        <a href="{{ url_for('main.reject_proposal', proposal_id=proposal.id) }}" class="btn btn-danger">Rejeitar</a>
+    </div>
+</div>
+{% endfor %}
+
+<h1>Propostas Enviadas</h1>
+{% for proposal in sent %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Para: {{ proposal.recipient.username }}</h5>
+        <p class="card-text"><strong>Propriedade:</strong> {{ proposal.property.title }}</p>
+        <p class="card-text"><strong>Valor:</strong> R$ {{ "%.2f"|format(proposal.amount) }}</p>
+        <p class="card-text"><strong>Status:</strong> {{ proposal.status }}</p>
+        <a href="{{ url_for('main.cancel_proposal', proposal_id=proposal.id) }}" class="btn btn-warning">Cancelar</a>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

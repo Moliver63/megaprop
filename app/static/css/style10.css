@@ -1,0 +1,254 @@
+:root {
+    --primary-dark: #0F3D5A;    /* Azul Escuro */
+    --secondary-light: #98FB98; /* Verde Claro */
+    --accent-color: #76c893;    /* Verde Médio */
+    --text-light: #F8F9FA;      /* Branco Suave */
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Reset Aprimorado */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+}
+
+body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background-color: var(--text-light);
+    color: #2D3748;
+    line-height: 1.7;
+}
+
+/* Header Dinâmico */
+header {
+    background: var(--primary-dark);
+    color: var(--text-light);
+    padding: 2rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+header .logo {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px var(--shadow-color);
+}
+
+nav ul {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+nav ul li a {
+    color: var(--text-light);
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    transition: transform 0.3s, background 0.3s;
+}
+
+nav ul li a:hover {
+    background: var(--secondary-light);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(152, 251, 152, 0.3);
+}
+
+/* Conteúdo Principal */
+main {
+    padding: 3rem 2rem;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Seção Hero Moderna */
+.hero {
+    background: linear-gradient(135deg, var(--primary-dark) 40%, var(--accent-color));
+    color: var(--text-light);
+    padding: 6rem 2rem;
+    border-radius: 20px;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(15, 61, 90, 0.9), rgba(118, 200, 147, 0.7));
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+    text-shadow: 2px 2px 4px var(--shadow-color);
+}
+
+/* Botões Modernos */
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--secondary-light), var(--accent-color));
+    color: var(--primary-dark);
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 0 4px 15px rgba(152, 251, 152, 0.3);
+}
+
+.cta-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg,
+            transparent,
+            rgba(255, 255, 255, 0.3),
+            transparent);
+    transition: 0.5s;
+}
+
+.cta-button:hover::before {
+    left: 100%;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(118, 200, 147, 0.5);
+}
+
+/* Cards Dinâmicos */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+}
+
+.feature-card {
+    background: var(--text-light);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    transform-style: preserve-3d;
+    box-shadow: 0 10px 30px -10px var(--shadow-color);
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--primary-dark), var(--secondary-light));
+    z-index: -1;
+    border-radius: 15px;
+    transform: translateZ(-1px);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px) rotateX(5deg) rotateY(5deg);
+}
+
+/* Layout do Dashboard */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.dashboard-card {
+    background: var(--text-light);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 5px 25px -5px var(--shadow-color);
+    transition: transform 0.4s;
+}
+
+.dashboard-card:hover {
+    transform: scale(1.03);
+}
+
+/* Formulários Modernos */
+.auth-card {
+    background: var(--text-light);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 10px 40px -10px var(--shadow-color);
+    border: 2px solid rgba(15, 61, 90, 0.1);
+}
+
+.auth-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid rgba(15, 61, 90, 0.1);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s;
+}
+
+.auth-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(118, 200, 147, 0.3);
+}
+
+/* Footer Dinâmico */
+footer {
+    background: var(--primary-dark);
+    color: var(--text-light);
+    padding: 3rem 0;
+    margin-top: 5rem;
+    clip-path: polygon(0 20%, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Efeitos de Hover Genéricos */
+.hover-scale {
+    transition: transform 0.3s;
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+    
+    nav ul {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}

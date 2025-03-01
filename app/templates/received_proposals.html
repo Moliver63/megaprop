@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Propostas Recebidas - Megaprop{% endblock %}
+{% block content %}
+<!-- Título -->
+<h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
+    <i class="fas fa-mailbox me-2"></i>Propostas
+</h1>
+
+
+<div class="container py-5">
+    <h2 class="text-center mb-4 pb-2 border-bottom">Propostas Recebidas</h2>
+    <div class="table-responsive mb-4">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Propriedade</th>
+                    <th>Remetente</th>
+                    <th>Valor</th>
+                    <th>Mensagem</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if proposals %}
+                    {% for proposal in proposals %}
+                        <tr class="align-middle">
+                            <td>{{ proposal.id }}</td>
+                            <td>{{ proposal.property.title }}</td>
+                            <td>{{ proposal.sender.username }}</td>
+                            <td>R$ {{ "{:,.2f}".format(proposal.amount) }}</td>
+                            <td>{{ proposal.message }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('main.respond_proposal', proposal_id=proposal.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Responder">
+                                    <i class="fas fa-reply"></i>
+                                </a>
+                                <a href="{{ url_for('main.accept_proposal', proposal_id=proposal.id) }}" 
+                                   class="btn btn-sm btn-success" 
+                                   title="Aceitar">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a href="{{ url_for('main.reject_proposal', proposal_id=proposal.id) }}" 
+                                   class="btn btn-sm btn-danger" 
+                                   title="Rejeitar">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center p-3">
+                            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                            <h5 class="text-muted">Nenhuma proposta recebida</h5>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-center">
+        <button class="btn btn-primary" onclick="exportProposals()">Exportar Propostas</button>
+    </div>
+</div>
+
+<script>
+// Função para exportar propostas (simulação)
+function exportProposals() {
+    const proposals = {{ proposals|tojson }};
+    const csvContent = "data:text/csv;charset=utf-8," 
+                     + "ID;Propriedade;Remetente;Valor;Mensagem\n"
+                     + proposals.map(p => `${p.id};${p.property.title};${p.sender.username};R$ ${p.amount};${p.message}`).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "propostas_megaprop.csv");
+    document.body.appendChild(link);
+    link.click();
+}
+</script>
+{% endblock %}

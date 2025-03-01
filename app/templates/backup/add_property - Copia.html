@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Adicionar Imóvel - Megaprop{% endblock %}
+{% block content %}
+    <form method="POST" action="{{ url_for('main.add_property') }}" enctype="multipart/form-data" class="border p-4 rounded-3 bg-light shadow-lg">
+        {{ form.hidden_tag() }}
+
+        <!-- Campo de Título -->
+        <div class="mb-3">
+            <label class="form-label">{{ form.title.label.text }} *</label>
+            {{ form.title(class="form-control form-control-lg", placeholder="Ex.: Casa à Venda") }}
+            {% for error in form.title.errors %}
+                <small class="text-danger animate__animated animate__fadeInDown">{{ error }}</small>
+            {% endfor %}
+        </div>
+
+        <!-- Repita para os outros campos -->
+
+        <!-- Botão de envio -->
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg shadow-sm" style="background: linear-gradient(135deg, #3498db, #2980b9); border: none;">
+                <i class="fas fa-save me-2"></i>Salvar e Publicar
+            </button>
+        </div>
+    </form>
+{% endblock %}

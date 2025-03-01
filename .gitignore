@@ -1,0 +1,3 @@
+# Arquivos de ambiente virtual .env 
+# Arquivos Python compilados __pycache__/ *.pyc *.pyo # Configurações específicas do VSCode .vscode/ 
+# Migrations e banco de dados (se aplicável) migrations/ instance/

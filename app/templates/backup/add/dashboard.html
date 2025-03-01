@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Megaprop{% endblock %}
+<!-- Título -->
+<h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
+    <i class="fas fa-tachometer-alt me-2" style="color: #6e45e2;"></i>Dashboard
+</h1>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <!-- Imóveis Cadastrados -->
+        <div class="col-12 col-md-3">
+            <div class="card shadow-sm rounded-3 animate__animated animate__fadeInUp" style="background-color: var(--background-color);">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                    <i class="fas fa-building fa-2x text-primary mb-3"></i>
+                    <h5 class="card-title fw-bold">Imóveis Cadastrados</h5>
+                    <p class="card-text display-6">{{ property_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Propostas Recebidas -->
+        <div class="col-12 col-md-3">
+            <div class="card shadow-sm rounded-3 animate__animated animate__fadeInUp" style="background-color: var(--background-color);">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                    <i class="fas fa-envelope-open-text fa-2x text-success mb-3"></i>
+                    <h5 class="card-title fw-bold">Propostas Recebidas</h5>
+                    <p class="card-text display-6">{{ proposal_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matches Realizados -->
+        <div class="col-12 col-md-3">
+            <div class="card shadow-sm rounded-3 animate__animated animate__fadeInUp" style="background-color: var(--background-color);">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                    <i class="fas fa-handshake fa-2x text-info mb-3"></i>
+                    <h5 class="card-title fw-bold">Matches Realizados</h5>
+                    <p class="card-text display-6">{{ match_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taxa de Conversão -->
+        <div class="col-12 col-md-3">
+            <div class="card shadow-sm rounded-3 animate__animated animate__fadeInUp" style="background-color: var(--background-color);">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                    <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                    <h5 class="card-title fw-bold">Taxa de Conversão</h5>
+                    <p class="card-text display-6">{{ conversion_rate }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Desempenho -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Desempenho Mensal</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matches Recentes -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="fw-bold mb-3">Seus Matches Recentes</h2>
+            {% if matches %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Imóvel</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matches %}
+                                <tr>
+                                    <td>{{ match.property.title }}</td>
+                                    <td>
+                                        {% if match.status == 'Aceito' %}
+                                            <span class="badge bg-success">{{ match.status }}</span>
+                                        {% elif match.status == 'Pendente' %}
+                                            <span class="badge bg-warning">{{ match.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ match.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ match.timestamp.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.view_proposal', id=match.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i> Ver Detalhes
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">Nenhum match encontrado.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+<!-- Scripts -->
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Gráfico de Desempenho
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const performanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            datasets: [{
+                label: 'Imóveis Cadastrados',
+                data: [12, 19, 3, 5, 2, 3, 10, 15, 20, 25, 30, 40],
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Propostas Recebidas',
+                data: [5, 10, 2, 4, 1, 2, 8, 12, 18, 22, 28, 35],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Desempenho Mensal'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Encontre Seu Imóvel - Megaprop{% endblock %}
+{% block content %}
+<section class="search-section py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4 fw-bold">Encontre o Imóvel Perfeito</h2>
+        <form method="GET" class="row g-3 align-items-end">
+            <!-- Campo de Localização -->
+            <div class="col-md-4">
+                <label for="location" class="form-label visually-hidden">Localização</label>
+                <input type="text" id="location" class="form-control" placeholder="Digite a localização desejada" name="location" value="{{ request.args.get('location', '') }}">
+            </div>
+
+            <!-- Campo de Tipo de Imóvel -->
+            <div class="col-md-2">
+                <label for="type" class="form-label visually-hidden">Tipo de Imóvel</label>
+                <select id="type" class="form-select" name="type">
+                    <option value="">Selecione o tipo</option>
+                    <option value="casa" {% if request.args.get('type') == 'casa' %}selected{% endif %}>Casa</option>
+                    <option value="apartamento" {% if request.args.get('type') == 'apartamento' %}selected{% endif %}>Apartamento</option>
+                    <option value="terreno" {% if request.args.get('type') == 'terreno' %}selected{% endif %}>Terreno</option>
+                </select>
+            </div>
+
+            <!-- Campo de Preço Máximo -->
+            <div class="col-md-2">
+                <label for="max_price" class="form-label visually-hidden">Preço Máximo</label>
+                <input type="number" id="max_price" class="form-control" placeholder="Preço máximo (R$)" name="max_price" value="{{ request.args.get('max_price', '') }}">
+            </div>
+
+            <!-- Botão de Busca -->
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+
+            <!-- Botão Limpar Filtros -->
+            <div class="col-md-2">
+                <a href="{{ url_for('main.property_search') }}" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Limpar Filtros
+                </a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="property-list py-5">
+    <div class="container">
+        <!-- Exibição dos Resultados -->
+        <div class="row">
+            {% if properties %}
+                {% for property in properties %}
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <!-- Thumbnail do Imóvel -->
+                        <img src="{{ property.thumbnail or url_for('static', filename='images/default_property.jpg') }}" class="card-img-top img-fluid" alt="{{ property.title }}">
+
+                        <!-- Corpo do Card -->
+                        <div class="card-body d-flex flex-column">
+                            <h3 class="card-title">{{ property.title }}</h3>
+                            <p class="card-text text-muted">{{ property.location }}</p>
+                            <p class="price fw-bold text-success">R$ {{ "%.2f"|format(property.price) }}</p>
+                            <div class="mt-auto">
+                                <a href="{{ url_for('main.property_details', id=property.id) }}" class="btn btn-outline-primary w-100">
+                                    Ver Detalhes <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Mensagem de Nenhum Resultado Encontrado -->
+                <div class="col-12 text-center">
+                    <p class="lead text-muted">Nenhum imóvel encontrado com os filtros aplicados.</p>
+                    <a href="{{ url_for('main.property_search') }}" class="btn btn-primary">
+                        <i class="fas fa-home me-2"></i> Ver Todos os Imóveis
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Paginação (opcional) -->
+        <nav aria-label="Paginação" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.property_search', page=pagination.prev_num, **request.args) }}" aria-label="Anterior">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                    </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('main.property_search', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.property_search', page=pagination.next_num, **request.args) }}" aria-label="Próximo">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</section>
+{% endblock %}

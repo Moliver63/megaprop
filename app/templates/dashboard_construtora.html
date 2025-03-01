@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Megaprop{% endblock %}
+{% block content %}
+    <!-- Título -->
+<h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
+    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+</h1>
+
+<!-- Botões de Navegação -->
+<div class="row mb-4 g-3">
+    <div class="col-md-3">
+        <a href="{{ url_for('main.add_property') }}" 
+           class="btn btn-success w-100 d-flex align-items-center justify-content-center shadow-lg rounded-4 py-3"
+           style="transition: all 0.3s; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none;">
+            <i class="fas fa-plus me-2 fs-5"></i> 
+            <span class="fw-semibold">Cadastrar Imóvel</span>
+        </a>
+    </div>
+    
+    <div class="col-md-3">
+        <a href="{{ url_for('main.my_properties') }}" 
+           class="btn btn-info w-100 d-flex align-items-center justify-content-center shadow-lg rounded-4 py-3"
+           style="transition: all 0.3s; background: linear-gradient(135deg, #3498db, #2980b9); border: none;">
+            <i class="fas fa-home me-2 fs-5"></i> 
+            <span class="fw-semibold">Meus Imóveis</span>
+        </a>
+    </div>
+    
+    <div class="col-md-3">
+        <a href="{{ url_for('main.received_proposals') }}" 
+           class="btn btn-warning w-100 d-flex align-items-center justify-content-center shadow-lg rounded-4 py-3"
+           style="transition: all 0.3s; background: linear-gradient(135deg, #f1c40f, #f39c12); border: none;">
+            <i class="fas fa-envelope me-2 fs-5"></i> 
+            <span class="fw-semibold">Propostas Recebidas</span>
+        </a>
+    </div>
+    
+    <div class="col-md-3">
+        <a href="{{ url_for('main.send_proposal') }}" 
+           class="btn btn-primary w-100 d-flex align-items-center justify-content-center shadow-lg rounded-4 py-3"
+           style="transition: all 0.3s; background: linear-gradient(135deg, #9b59b6, #8e44ad); border: none;">
+            <i class="fas fa-paper-plane me-2 fs-5"></i> 
+            <span class="fw-semibold">Enviar Proposta</span>
+        </a>
+    </div>
+</div>
+
+    <!-- Gráfico Interativo -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <canvas id="dashboardChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card text-center shadow-sm rounded-3" style="background-color: #f8f9fa;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Imóveis Cadastrados</h5>
+                    <p class="card-text display-6">{{ property_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card text-center shadow-sm rounded-3" style="background-color: #e9ecef;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Propostas Recebidas</h5>
+                    <p class="card-text display-6">{{ proposal_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card text-center shadow-sm rounded-3" style="background-color: #dee2e6;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Conexões Ativas</h5>
+                    <p class="card-text display-6">{{ connection_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atividades Recentes com Filtro -->
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="fw-bold mb-3">Atividades Recentes</h3>
+            <div class="mb-3">
+                <label for="filterActivities" class="form-label">Filtrar Atividades:</label>
+                <select id="filterActivities" class="form-select">
+                    <option value="all">Todas</option>
+                    <option value="proposal">Propostas</option>
+                    <option value="property">Imóveis</option>
+                    <option value="connection">Conexões</option>
+                </select>
+            </div>
+            {% if recent_activities %}
+                <ul class="list-group list-group-flush" id="activityList">
+                    {% for activity in recent_activities %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center activity-item" data-type="{{ activity.type }}">
+                            {{ activity.description }}
+                            <small class="text-muted">{{ activity.timestamp.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Nenhuma atividade recente.</p>
+            {% endif %}
+            <p id="noResultsMessage" class="text-muted d-none">Nenhuma atividade corresponde ao filtro selecionado.</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Gráfico Interativo
+        const ctx = document.getElementById('dashboardChart').getContext('2d');
+        const chartData = {
+            labels: ['Imóveis Cadastrados', 'Propostas Recebidas', 'Conexões Ativas'],
+            datasets: [{
+                label: 'Estatísticas Gerais',
+                data: [{{ property_count }}, {{ proposal_count }}, {{ connection_count }}],
+                backgroundColor: ['#6e45e2', '#88d3ce', '#ffc107'],
+                borderWidth: 1,
+            }]
+        };
+        new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filtro de Atividades
+        document.getElementById('filterActivities').addEventListener('change', function() {
+            const filterValue = this.value;
+            let hasVisibleItems = false;
+
+            document.querySelectorAll('.activity-item').forEach(item => {
+                const itemType = item.dataset.type;
+
+                if (filterValue === 'all' || itemType === filterValue) {
+                    item.style.display = '';
+                    hasVisibleItems = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Exibe ou oculta a mensagem de "nenhum resultado"
+            document.getElementById('noResultsMessage').classList.toggle('d-none', hasVisibleItems);
+        });
+    </script>
+{% endblock %}
