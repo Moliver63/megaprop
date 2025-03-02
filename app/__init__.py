@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from authlib.integrations.flask_client import OAuth  # Importa o OAuth do Authlib
 import os
 import logging
 from sqlalchemy.exc import OperationalError
@@ -12,6 +13,7 @@ from babel.numbers import format_currency
 db = SQLAlchemy()  # Inicializa o SQLAlchemy para gerenciar o banco de dados
 login_manager = LoginManager()  # Inicializa o LoginManager para autenticação de usuários
 migrate = Migrate()  # Inicializa o Migrate para gerenciar migrações do banco de dados
+oauth = OAuth()  # Inicializa o OAuth para autenticação com provedores externos
 
 def create_app():
     """
@@ -23,14 +25,43 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'sua_chave_secreta_aqui'  # Chave secreta para segurança
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///megaprop.db'  # URL do banco de dados
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Desativa o rastreamento de modificações do SQLAlchemy
-    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static/uploads')  # Pasta para upload de arquivos
-    app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}  # Extensões de arquivo permitidas para upload
-    app.config['UPLOAD_FOLDER_PROFILE'] = 'static/profile_pics'
+
+    # Configuração de upload de arquivos
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static/uploads')
+    PROFILE_PICS_FOLDER = os.path.join(os.getcwd(), 'static/profile_pics')
+
+    # Garante que as pastas de upload existam
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(PROFILE_PICS_FOLDER, exist_ok=True)
+
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER  # Pasta para upload de arquivos gerais
+    app.config['PROFILE_PICS_FOLDER'] = PROFILE_PICS_FOLDER  # Pasta para fotos de perfil
+    app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}  # Extensões de arquivo permitidas
+
     # Inicialização de extensões
     db.init_app(app)  # Inicializa o SQLAlchemy com a aplicação
     login_manager.init_app(app)  # Inicializa o LoginManager com a aplicação
     migrate.init_app(app, db)  # Inicializa o Migrate com a aplicação e o banco de dados
+    oauth.init_app(app)  # Inicializa o OAuth com a aplicação
     login_manager.login_view = 'main.login'  # Define a view de login para redirecionar usuários não autenticados
+
+    # Configuração do Google OAuth
+    app.config['GOOGLE_CLIENT_ID'] = '1000850630887-3jccqjga8unsr6bpfnn0qhmudkie10cm.apps.googleusercontent.com'
+    app.config['GOOGLE_CLIENT_SECRET'] = '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'
+    app.config['GOOGLE_AUTH_URI'] = 'https://accounts.google.com/o/oauth2/auth'
+    app.config['GOOGLE_TOKEN_URI'] = 'https://oauth2.googleapis.com/token'
+    app.config['GOOGLE_AUTH_PROVIDER_X509_CERT_URL'] = 'https://www.googleapis.com/oauth2/v1/certs'
+
+
+    oauth.register(
+        name='google',
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        userinfo_endpoint='https://www.googleapis.com/oauth2/v1/userinfo',
+        client_kwargs={'scope': 'openid profile email'}
+    )
 
     # Registrar filtro Jinja2 para formatação de moeda
     @app.context_processor

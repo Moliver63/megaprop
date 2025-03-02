@@ -12,6 +12,7 @@ from .forms import (
     ForgotPasswordForm,
     UpdateProfileForm
 )
+from app import db, oauth
 from flask_wtf.file import FileAllowed, FileSize
 from datetime import datetime
 import os
@@ -97,21 +98,70 @@ def register():
 # Login de usuário
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Rota para login tradicional (e-mail e senha) e redirecionamento para login com Google.
+    """
+    # Redireciona o usuário para o dashboard se já estiver autenticado
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
-    
+
     form = LoginForm()
+
+    # Processa o formulário de login tradicional
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
             flash('Login realizado com sucesso!', 'success')
-            next_page = request.args.get('next') or url_for('main.dashboard')  # Corrigido aqui
+            next_page = request.args.get('next') or url_for('main.dashboard')
             return redirect(next_page)
         else:
             flash('Login falhou. Verifique seu e-mail e senha.', 'danger')
-    
+
     return render_template('login.html', form=form)
+
+
+@main.route('/google-login')
+def google_login():
+    """
+    Rota para iniciar o processo de login com Google.
+    """
+    redirect_uri = url_for('main.authorize', _external=True)  # Use 'main.authorize' aqui
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@main.route('/authorize')
+def authorize():
+    """
+    Callback do Google OAuth para finalizar o login.
+    """
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = oauth.google.parse_id_token(token)
+
+        # Verifica se o usuário já existe no banco de dados
+        user = User.query.filter_by(email=user_info['email']).first()
+
+        if not user:
+            # Cria um novo usuário se não existir
+            user = User(
+                name=user_info.get('name'),
+                usertitle=user_info.get('email').split('@')[0],  # Usa parte do email como username
+                email=user_info.get('email'),
+                profile_picture=user_info.get('picture')  # Salva a foto de perfil do Google
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        # Loga o usuário no sistema
+        login_user(user)
+        flash('Login realizado com sucesso!', 'success')
+        return redirect(url_for('main.dashboard'))  # Redireciona para o dashboard
+
+    except Exception as e:
+        flash(f'Ocorreu um erro durante o login: {str(e)}', 'danger')
+        return redirect(url_for('main.login'))  # Redireciona para a página de login
+        
 # Recuperação de senha
 @main.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -134,6 +184,33 @@ def forgot_password():
             flash('Este e-mail não está registrado em nosso sistema.', 'danger')
 
     return render_template('forgot_password.html', form=form)
+# configurações
+@main.route('/settings', methods=['GET', 'POST'])
+def settings():
+    form = SettingsForm()
+
+    if form.validate_on_submit():
+        # Atualiza as informações do usuário
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+
+        # Salva a foto de perfil, se fornecida
+        if form.profile_picture.data:
+            # Processamento da imagem (ex.: salvar no servidor)
+            pass
+
+        current_user.user_type = form.user_type.data
+        db.session.commit()
+
+        flash("Suas configurações foram atualizadas com sucesso!", "success")
+        return redirect(url_for('main.settings'))
+
+    # Preenche o formulário com os dados atuais do usuário
+    form.username.data = current_user.username
+    form.email.data = current_user.email
+    form.user_type.data = current_user.user_type
+
+    return render_template('settings.html', form=form)
     
 # Perfil do usuário
 @main.route('/profile', methods=['GET', 'POST'])

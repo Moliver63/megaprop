@@ -144,16 +144,35 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        {% if current_user.is_authenticated %}
-                            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-                        {% else %}
-                            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.register') }}">Cadastre-se</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
+               <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav ms-auto">
+        {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('main.dashboard') }}" class="nav-link"><i class="fas fa-home me-2"></i><span>Dashboard</span></a></li>
+            <li><a href="{{ url_for('main.add_property') }}" class="nav-link"><i class="fas fa-add me-2"></i><span>Cadastrar Imóveis</span></a></li>
+            <li><a href="{{ url_for('main.my_properties') }}" class="nav-link"><i class="fas fa-building me-2"></i><span>Meus Imóveis</span></a></li>
+            <li><a href="{{ url_for('main.received_proposals') }}" class="nav-link"><i class="fas fa-envelope me-2"></i><span>Propostas</span></a></li>
+            <li><a href="{{ url_for('main.match') }}" class="nav-link"><i class="fas fa-handshake me-2"></i><span>Matches</span></a></li>
+            <li><a href="{{ url_for('main.send_proposal') }}" class="nav-link"><i class="fas fa-paper-plane me-2"></i><span>Enviar Proposta</span></a></li>
+
+            <!-- Dropdown para o perfil -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user me-2"></i><span>Perfil</span>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('main.profile') }}">Meu Perfil</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('main.settings') }}">Configurações</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">Sair</a></li>
+                </ul>
+            </li>
+        {% else %}
+            <!-- Itens para usuários não autenticados -->
+            <li><a href="{{ url_for('main.login') }}" class="nav-link"><i class="fas fa-sign-in-alt me-2"></i><span>Login</span></a></li>
+            <li><a href="{{ url_for('main.register') }}" class="nav-link"><i class="fas fa-user-plus me-2"></i><span>Registrar</span></a></li>
+        {% endif %}
+    </ul>
+</div>
             </div>
         </nav>
     </header>
@@ -178,13 +197,6 @@
                 <h2 class="mb-4">Megaprop</h2>
                 <ul class="list-unstyled">
                     <li><a href="{{ url_for('main.dashboard') }}" class="nav-link"><i class="fas fa-home me-2"></i><span>Dashboard</span></a></li>
-                    <li><a href="{{ url_for('main.add_property') }}" class="nav-link"><i class="fas fa-add me-2"></i><span>Cadastrar Imóveis</span></a></li>
-                    <li><a href="{{ url_for('main.my_properties') }}" class="nav-link"><i class="fas fa-building me-2"></i><span>Meus Imóveis</span></a></li>
-                    <li><a href="{{ url_for('main.received_proposals') }}" class="nav-link"><i class="fas fa-envelope me-2"></i><span>Propostas</span></a></li>
-                    <li><a href="{{ url_for('main.match') }}" class="nav-link"><i class="fas fa-handshake me-2"></i><span>Matches</span></a></li>
-                    <li><a href="{{ url_for('main.send_proposal') }}" class="nav-link"><i class="fas fa-paper-plane me-2"></i><span>Enviar Proposta</span></a></li> 
-                    <li><a href="{{ url_for('main.profile') }}" class="nav-link"><i class="fas fa-user me-2"></i><span>Perfil</span></a></li>
-                    <li><a href="{{ url_for('main.logout') }}" class="nav-link"><i class="fas fa-outman me-2"></i><span>Sair</span></a></li>
                 </ul>
             </div>
         </nav>

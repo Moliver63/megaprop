@@ -9,7 +9,7 @@
                 <div class="card-header bg-primary text-white text-center py-3">
                     <h3 class="mb-0">Meu Perfil</h3>
                 </div>
-                
+
                 <!-- Corpo do Cartão -->
                 <div class="card-body">
                     <!-- Foto de Perfil -->
@@ -101,9 +101,11 @@ document.getElementById('profile-pic-input').addEventListener('change', function
             const preview = document.getElementById('profile-preview');
             const defaultProfile = document.getElementById('default-profile');
 
+            // Se já existe uma imagem, atualiza o src
             if (preview) {
                 preview.src = e.target.result;
             } else {
+                // Caso contrário, substitui o ícone padrão por uma nova imagem
                 const img = document.createElement('img');
                 img.id = 'profile-preview';
                 img.src = e.target.result;

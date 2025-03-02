@@ -102,6 +102,26 @@ class LoginForm(FlaskForm):
     )
     submit = SubmitField('Entrar')
 
+#Configurações formulário
+class SettingsForm(FlaskForm):
+    username = StringField(
+        'Nome de Usuário',
+        validators=[DataRequired(message="O nome de usuário é obrigatório.")]
+    )
+    email = StringField(
+        'E-mail',
+        validators=[DataRequired(message="O e-mail é obrigatório."), Email(message="Insira um e-mail válido.")]
+    )
+    profile_picture = FileField(
+        'Foto de Perfil',
+        render_kw={"accept": ".png,.jpg,.jpeg"}
+    )
+    user_type = SelectField(
+        'Tipo de Usuário',
+        choices=[('admin', 'Administrador'), ('user', 'Usuário')],
+        validators=[DataRequired(message="Selecione um tipo de usuário.")]
+    )
+
 # Formulário para Cadastro ou Edição de Imóveis
 class PropertyForm(FlaskForm):
     title = StringField(

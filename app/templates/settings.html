@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações - Megaprop{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Título -->
+    <h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
+        <i class="fas fa-cog me-2"></i>Configurações
+    </h1>
+    
+    <!-- Exibição de Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Formulário de Configurações -->
+    <form method="POST" action="{{ url_for('main.settings') }}" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- Nome do Usuário -->
+        <div class="mb-3">
+            {{ form.username.label(class="form-label fw-bold") }}
+            {{ form.username(class="form-control", placeholder="Seu nome de usuário") }}
+            {% if form.username.errors %}
+                <div class="invalid-feedback d-block text-danger">
+                    {% for error in form.username.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- E-mail -->
+        <div class="mb-3">
+            {{ form.email.label(class="form-label fw-bold") }}
+            {{ form.email(class="form-control", placeholder="Seu e-mail") }}
+            {% if form.email.errors %}
+                <div class="invalid-feedback d-block text-danger">
+                    {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Foto de Perfil -->
+        <div class="mb-3">
+            {{ form.profile_picture.label(class="form-label fw-bold") }}
+            {{ form.profile_picture(class="form-control", accept=".png,.jpg,.jpeg") }}
+            <small class="form-text text-muted">Formatos suportados: PNG, JPG.</small>
+            {% if form.profile_picture.errors %}
+                <div class="invalid-feedback d-block text-danger">
+                    {% for error in form.profile_picture.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Tipo de Usuário -->
+        <div class="mb-3">
+            {{ form.user_type.label(class="form-label fw-bold") }}
+            {{ form.user_type(class="form-select") }}
+            {% if form.user_type.errors %}
+                <div class="invalid-feedback d-block text-danger">
+                    {% for error in form.user_type.errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Botão de Salvar -->
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #3498db, #2980b9); border: none;">
+                <i class="fas fa-save me-2"></i>Salvar Alterações
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

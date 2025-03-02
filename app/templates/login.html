@@ -11,12 +11,15 @@
                     <!-- Exibição de Mensagens de Erro ou Sucesso -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} mb-3">{{ message }}</div>
-                            {% endfor %}
+                            <div class="mb-3">
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endfor %}
+                            </div>
                         {% endif %}
                     {% endwith %}
-                    <!-- Formulário de Login -->
+
+                    <!-- Formulário de Login Tradicional -->
                     <form method="POST" novalidate>
                         {{ form.hidden_tag() }}
                         <!-- Campo de Email -->
@@ -48,6 +51,19 @@
                             {{ form.submit(class="btn btn-primary btn-lg fw-bold") }}
                         </div>
                     </form>
+
+                    <!-- Divisão Visual -->
+                    <div class="text-center my-4">
+                        <span class="text-muted">ou</span>
+                    </div>
+
+                    <!-- Botão de Login com Google -->
+                    <div class="d-grid">
+                        <a href="{{ url_for('main.google_login') }}" class="btn btn-outline-danger btn-lg fw-bold">
+                            <i class="bi bi-google me-2"></i> Entrar com Google
+                        </a>
+                    </div>
+
                     <!-- Links de Ação -->
                     <div class="text-center mt-4">
                         <p class="mb-2">
