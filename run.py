@@ -40,14 +40,13 @@ def populate_database():
         admin_user = User.query.filter_by(email='admin@example.com').first()
         if not admin_user:
             # Cria o usuário admin inicial
-            hashed_password = generate_password_hash('senha_segura', method='pbkdf2:sha256')
             admin_user = User(
-                name='Admin',  # Adicione o nome
+                name='Admin',
                 usertitle='admin',
                 email='admin@example.com',
-                password=hashed_password,  # Usa o campo 'password' com hashing
                 role='admin'
             )
+            admin_user.set_password('senha_segura')  # Usa o método para definir a senha
             db.session.add(admin_user)
             db.session.commit()
             logger.info(f"Usuário admin criado: {admin_user.usertitle}")

@@ -46,38 +46,53 @@ def index():
 # Registro de usuário
 @main.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Rota para o cadastro de novos usuários.
+    """
+    # Redireciona o usuário para a página inicial se já estiver autenticado
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
-    
+
+    # Instância do formulário de registro
     form = RegistrationForm()
+
+    # Validação do formulário ao submeter
     if form.validate_on_submit():
         try:
             # Verifica se o email ou usertitle já estão cadastrados
-            if User.query.filter((User.email == form.email.data) | (User.usertitle == form.usertitle.data)).first():
+            existing_user = User.query.filter(
+                (User.email == form.email.data) | (User.usertitle == form.usertitle.data)
+            ).first()
+
+            if existing_user:
                 flash('E-mail ou nome de usuário já cadastrados.', 'danger')
                 return redirect(url_for('main.register'))
-            
-            # Cria um novo usuário
+
+            # Cria um novo usuário com os dados do formulário
             user = User(
                 name=form.name.data,
                 usertitle=form.usertitle.data,
                 email=form.email.data,
-                phone=form.phone.data if hasattr(form, 'phone') else None,
-                role=form.role.data if hasattr(form, 'role') else USER_ROLE
+                user_profile=form.user_profile.data
             )
+
+            # Hasha a senha antes de salvar no banco de dados
             user.set_password(form.password.data)
-            
-            # Adiciona o usuário ao banco de dados
+
+            # Salva o novo usuário no banco de dados
             db.session.add(user)
             db.session.commit()
-            
-            flash('Sua conta foi criada com sucesso! Por favor, faça login.', 'success')
+
+            # Exibe uma mensagem de sucesso e redireciona para a página de login
+            flash('Cadastro realizado com sucesso! Faça login para continuar.', 'success')
             return redirect(url_for('main.login'))
+
         except Exception as e:
+            # Em caso de erro, reverte a transação e exibe uma mensagem de erro
             db.session.rollback()
             flash(f'Ocorreu um erro ao criar sua conta: {str(e)}', 'danger')
-            current_app.logger.error(f"Erro ao registrar usuário: {str(e)}")
-    
+
+    # Renderiza o formulário de registro
     return render_template('register.html', form=form)
 # Login de usuário
 @main.route('/login', methods=['GET', 'POST'])

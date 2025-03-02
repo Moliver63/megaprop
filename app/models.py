@@ -8,44 +8,88 @@ class User(UserMixin, db.Model):
     Representa os usuários do sistema.
     """
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)  # Nome completo do usuário
-    usertitle = db.Column(db.String(80), unique=True, nullable=False, index=True)  # Nome de usuário
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(50), nullable=False, default='user')  # Papel: admin, user, corretor, etc.
-    user_type = db.Column(db.String(50), nullable=False, default='individual')  # Tipo: individual, empresa, etc.
-    preferred_locations = db.Column(db.String(500), nullable=True)  # Locações preferidas pelo usuário
-    phone = db.Column(db.String(20), nullable=True)  # Número de telefone
-    profile_picture = db.Column(db.String(200), nullable=True)  # URL da foto de perfil
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime, nullable=True)
 
-    # Relacionamentos
-    properties = db.relationship('Property', back_populates='owner', lazy='dynamic', cascade='all, delete-orphan')
-    sent_proposals = db.relationship('Proposal', foreign_keys='Proposal.sender_id', back_populates='sender')
-    received_proposals = db.relationship('Proposal', foreign_keys='Proposal.receiver_id', back_populates='receiver')
-    activities = db.relationship('Activity', back_populates='user', lazy='dynamic')
-    matches = db.relationship('Match', foreign_keys='Match.user_id', back_populates='user')
-    received_matches = db.relationship('Match', foreign_keys='Match.matched_user_id', back_populates='matched_user')
-    notifications = db.relationship('Notification', back_populates='user', lazy='dynamic')
+    # === Campos principais ===
+    id = db.Column(db.Integer, primary_key=True, comment="ID único do usuário")
+    name = db.Column(db.String(100), nullable=False, comment="Nome completo do usuário")
+    usertitle = db.Column(
+        db.String(80), unique=True, nullable=False, index=True, comment="Nome de usuário"
+    )
+    email = db.Column(
+        db.String(120), unique=True, nullable=False, index=True, comment="E-mail do usuário"
+    )
+    password_hash = db.Column(
+        db.String(200), nullable=False, comment="Senha hashada do usuário"
+    )
+    role = db.Column(
+        db.String(50), nullable=False, default='user', comment="Papel: admin, user, corretor, etc."
+    )
+    user_profile = db.Column(
+        db.String(50), nullable=False, default='individual', comment="Perfil: individual, empresa, etc."
+    )
+    preferred_locations = db.Column(
+        db.String(500), nullable=True, comment="Locações preferidas pelo usuário"
+    )
+    phone = db.Column(db.String(20), nullable=True, comment="Número de telefone do usuário")
+    profile_picture = db.Column(
+        db.String(200), nullable=True, comment="URL da foto de perfil do usuário"
+    )
+    created_at = db.Column(
+        db.DateTime, default=datetime.utcnow, comment="Data de criação do usuário"
+    )
+    last_login = db.Column(
+        db.DateTime, nullable=True, comment="Último login do usuário"
+    )
 
+    # === Relacionamentos ===
+    properties = db.relationship(
+        'Property', back_populates='owner', lazy='dynamic', cascade='all, delete-orphan'
+    )
+    sent_proposals = db.relationship(
+        'Proposal', foreign_keys='Proposal.sender_id', back_populates='sender'
+    )
+    received_proposals = db.relationship(
+        'Proposal', foreign_keys='Proposal.receiver_id', back_populates='receiver'
+    )
+    activities = db.relationship(
+        'Activity', back_populates='user', lazy='dynamic'
+    )
+    matches = db.relationship(
+        'Match', foreign_keys='Match.user_id', back_populates='user'
+    )
+    received_matches = db.relationship(
+        'Match', foreign_keys='Match.matched_user_id', back_populates='matched_user'
+    )
+    notifications = db.relationship(
+        'Notification', back_populates='user', lazy='dynamic'
+    )
+
+    # === Métodos para gerenciamento de senha ===
     def set_password(self, password):
-        """Define a senha do usuário usando hashing."""
-        self.password = generate_password_hash(password, method='pbkdf2:sha256')
+        """
+        Define a senha do usuário usando hashing.
+        """
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
-        """Verifica se a senha fornecida corresponde à senha armazenada."""
-        return check_password_hash(self.password, password)
+        """
+        Verifica se a senha fornecida corresponde à senha armazenada.
+        """
+        return check_password_hash(self.password_hash, password)
 
+    # === Métodos auxiliares ===
     def get_active_properties(self):
-        """Retorna os imóveis ativos do usuário."""
+        """
+        Retorna os imóveis ativos do usuário.
+        """
         return self.properties.filter(
             Property.status.in_(['available', 'negotiation'])
         ).order_by(Property.created_at.desc())
 
     def get_match_suggestions(self, limit=10):
-        """Retorna sugestões de imóveis com base nas preferências de localização do usuário."""
+        """
+        Retorna sugestões de imóveis com base nas preferências de localização do usuário.
+        """
         if not self.preferred_locations:
             return []
         return Property.query.filter(
@@ -53,9 +97,10 @@ class User(UserMixin, db.Model):
             Property.status == 'available'
         ).limit(limit).all()
 
+    # === Representação do objeto ===
     def __repr__(self):
         return f'<User {self.usertitle}>'
-
+        
 class Property(db.Model):
     """
     Representa imóveis com suporte a geolocalização e tags.

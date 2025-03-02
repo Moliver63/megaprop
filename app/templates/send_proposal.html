@@ -5,19 +5,29 @@
 {% block content %}
 <!-- Título -->
 <h1 class="text-center text-uppercase fw-bold mb-4" style="color: #2c3e50; letter-spacing: 2px;">
-    <i class="fas fa-paper-plane me-2"></i>Enviar Proposta
+    <i class="fas fa-paper-plane me-2"></i> Enviar Proposta
 </h1>
 
-<!-- Formulário de Envio de Proposta -->
+<!-- Informações do Usuário -->
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h5 class="fw-bold">Usuário: {{ current_user.name }}</h5>
+            <p class="text-muted">Perfil: {{ current_user.profile }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Container Principal -->
 <div class="container py-5">
-    <!-- Exibição de mensagens de erro ou sucesso -->
+    <!-- Exibição de Mensagens -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
+                            <i class="fas fa-info-circle me-2"></i> {{ message }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                         </div>
                     {% endfor %}
@@ -26,41 +36,42 @@
         {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('main.send_proposal') }}" enctype="multipart/form-data">
+    <!-- Formulário -->
+    <form method="POST" action="{{ url_for('main.send_proposal') }}" enctype="multipart/form-data" class="needs-validation" novalidate>
         {{ form.hidden_tag() }}
 
-        <!-- Selecione o Imóvel (Opcional) -->
+        <!-- Seleção de Imóvel -->
         <div class="mb-3">
-            {{ form.property_id.label(class="form-label") }}
+            {{ form.property_id.label(class="form-label fw-semibold") }}
             {{ form.property_id(class="form-select", placeholder="Selecione um imóvel") }}
             {% for error in form.property_id.errors %}
-                <small class="text-danger">{{ error }}</small>
+                <div class="text-danger small">{{ error }}</div>
             {% endfor %}
         </div>
 
-        <!-- Mensagem -->
+        <!-- Mensagem da Proposta -->
         <div class="mb-3">
-            {{ form.message.label(class="form-label") }}
-            {{ form.message(class="form-control", rows="4", placeholder="Explique detalhes importantes sobre sua proposta...") }}
+            {{ form.message.label(class="form-label fw-semibold") }}
+            {{ form.message(class="form-control", rows="4", placeholder="Detalhe sua proposta...") }}
             {% for error in form.message.errors %}
-                <small class="text-danger">{{ error }}</small>
+                <div class="text-danger small">{{ error }}</div>
             {% endfor %}
         </div>
 
-        <!-- Anexar Documento (Opcional) -->
+        <!-- Upload de Anexo -->
         <div class="mb-3">
-            {{ form.attachment.label(class="form-label") }}
+            {{ form.attachment.label(class="form-label fw-semibold") }}
             {{ form.attachment(class="form-control", accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg") }}
-            <small class="form-text text-muted">Você pode anexar documentos como comprovantes ou planilhas (formatos suportados: PDF, DOC, XLS, PNG, JPG).</small>
+            <small class="form-text text-muted">Formatos suportados: PDF, DOC, XLS, PNG, JPG.</small>
             {% for error in form.attachment.errors %}
-                <small class="text-danger">{{ error }}</small>
+                <div class="text-danger small">{{ error }}</div>
             {% endfor %}
         </div>
 
         <!-- Botão de Envio -->
         <div class="d-grid gap-2">
             <button type="submit" class="btn btn-primary btn-lg" style="background: linear-gradient(135deg, #3498db, #2980b9); border: none;">
-                Enviar Proposta
+                <i class="fas fa-paper-plane me-2"></i> Enviar Proposta
             </button>
         </div>
     </form>

@@ -24,9 +24,15 @@ from flask_login import current_user  # Para validação no UpdateProfileForm
 
 # Formulário de Registro
 class RegistrationForm(FlaskForm):
+    """
+    Formulário de cadastro de usuários.
+    """
     name = StringField(
         'Nome Completo',
-        validators=[DataRequired(message="O nome é obrigatório.")]
+        validators=[
+            DataRequired(message="O nome é obrigatório."),
+            Length(min=3, max=100, message="O nome deve ter entre 3 e 100 caracteres.")
+        ]
     )
     usertitle = StringField(
         'Nome de Usuário',
@@ -56,12 +62,18 @@ class RegistrationForm(FlaskForm):
             EqualTo('password', message="As senhas devem coincidir.")
         ]
     )
-    role = SelectField(
-        'Função',
-        choices=[('user', 'Usuário'), ('admin', 'Administrador')],
-        default='user'
+    user_profile = SelectField(
+        'Perfil do Usuário',
+        choices=[
+            ('corretor_autonomo', 'Corretor Autônomo'),
+            ('corretor_vinculado', 'Corretor Vinculado a Imobiliária'),
+            ('imobiliaria', 'Imobiliária'),
+            ('construtora', 'Construtora'),
+            ('empreiteira', 'Empreiteira')
+        ],
+        validators=[DataRequired(message="Selecione um perfil de usuário.")]
     )
-    submit = SubmitField('Registrar')
+    submit = SubmitField('Cadastrar')
 
     def validate_usertitle(self, usertitle):
         user = User.query.filter_by(usertitle=usertitle.data).first()
