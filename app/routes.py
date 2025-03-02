@@ -100,21 +100,26 @@ def login():
 # Recuperação de senha
 @main.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    # Se o usuário já estiver autenticado, redirecione para a página inicial
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+
     form = ForgotPasswordForm()
     if form.validate_on_submit():
         email = form.email.data
         user = User.query.filter_by(email=email).first()
+
         if user:
-            # Gere um token único e envie um e-mail com o link de recuperação
+            # Gera um token único e envia um e-mail com o link de recuperação
             token = generate_reset_token(user)
             send_reset_email(user, token)
             flash('Um e-mail de recuperação foi enviado para sua caixa de entrada.', 'info')
             return redirect(url_for('main.login'))
         else:
             flash('Este e-mail não está registrado em nosso sistema.', 'danger')
-    
-    return render_template('forgot_password.html', form=form)
 
+    return render_template('forgot_password.html', form=form)
+    
 # Perfil do usuário
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -548,3 +553,4 @@ def sign_agreement(agreement_id):
             flash("Erro ao assinar o termo. Tente novamente.", "error")
 
     return render_template('sign_agreement.html', agreement=agreement)
+    # Define a rota '/forgot-password' dentro do Blueprint 'main'
